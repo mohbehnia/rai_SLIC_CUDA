@@ -1,0 +1,13 @@
+prefix=./yo
+exec_prefix=./yo
+libdir=./yo/lib
+sharedlibdir=./yo/lib
+includedir=./yo/include
+
+Name: zlib
+Description: zlib compression library
+Version: 1.2.11
+
+Requires:
+Libs: -L${libdir} -L${sharedlibdir} -lz
+Cflags: -I${includedir}
