@@ -19,18 +19,13 @@ int main() {
 
 	//start segmentation
 	Mat frame;
-	frame = imread("/src/image_seg.jpg", IMREAD_COLOR);
-	cout << "FIRST1" << endl;
+	frame = imread("/src/temple.jpg", IMREAD_COLOR);
 	int diamSpx = sqrt(frame.rows*frame.cols/10000); //want about 10
-	cout << "FIRST2" << endl;
 	SlicCuda oSlicCuda;
 	oSlicCuda.initialize(frame, diamSpx, initType, wc, nIteration);
-	cout << "FIRST3" << endl;
 	Mat labels;
-	cout << "FIRST4" << endl;
 	auto t0 = std::chrono::high_resolution_clock::now();
 	oSlicCuda.segment(frame);
-	cout << "FIRST5" << endl;
 	auto t1 = std::chrono::high_resolution_clock::now();
 	double time = std::chrono::duration<double>(t1-t0).count() ;
 	cout << "Frame " << frame.size() << "Segment Time: "<< time <<"s"<<endl;
@@ -40,15 +35,14 @@ int main() {
 
 	labels = oSlicCuda.getLabels();
 	auto data = labels.data;
-
+	cout << "FIRST7" << endl;
 	// SlicCuda::displayBound(frame, (float*)labels.data, Scalar(0, 0, 0));
 	SlicCuda::displayPoint1(frame, (float*)labels.data, Scalar(0, 0, 0));
+	cout << "FIRST8" << endl;
 
+	bool success = imwrite("/build/out.jpg", frame);
 
-	printf("TRYING TO WRITE\n");
-	imwrite("/build/out.jpg", frame);
-
-
+	cout << "WRITE " << success << endl;
 
     return 0;
 }

@@ -58,6 +58,8 @@ void SlicCuda::initialize(const cv::Mat& frame0, const int diamSpxOrNbSpx , cons
 	cout << "INIT2" << endl;
 	initGpuBuffers();
 	cout << "INIT3" << endl;
+	cout << m_FrameWidth << m_FrameHeight << endl;
+	cout << m_nbIteration << " " << m_SpxWidth << " " << m_SpxHeight << " " << m_nbPx << " " << m_InitType << " " << SLIC_NSPX << " " << m_wc  << " " << m_SpxDiam  << " " << m_SpxArea << " " << m_nbSpx << endl;
 }
 
 void SlicCuda::segment(const Mat& frameBGR) {
@@ -681,6 +683,8 @@ void SlicCuda::displayPoint1(cv::Mat& image, const float* labels, const cv::Scal
     int width = image.cols, height = image.rows;
 
 	// Go through all the pixels.
+
+	/* identify edges */
     auto t0 = std::chrono::high_resolution_clock::now();
 	for (int i = 0; i<image.rows; i++) {
 		for (int j = 0; j < image.cols; j++) {
@@ -708,6 +712,8 @@ void SlicCuda::displayPoint1(cv::Mat& image, const float* labels, const cv::Scal
 		}
 	}
 
+
+	/* identify corners */
 	for (int i = 0; i<image.rows; i++) {
 		for (int j = 0; j < image.cols; j++) {
             if( zeros[i][j]==255 ) {
@@ -796,6 +802,8 @@ void SlicCuda::displayPoint1(cv::Mat& image, const float* labels, const cv::Scal
     cudaMalloc(&d_tri_img, sizeof(uint8_t) * rows * cols * 3);
 
     Triangle *h_triangles = new Triangle[20000];
+    bool once0 = false;
+
     
     int num_triangles;
     all_t(rows, cols, d_ownerMap, h_deviceOnwers, d_triangle_sum, d_tri_img, d_img, num_triangles, image, h_triangles);
@@ -834,8 +842,14 @@ void SlicCuda::displayPoint1(cv::Mat& image, const float* labels, const cv::Scal
             Mat tmp;
             tmp.create(cv::Size2d(cols, rows), CV_8UC3);
             cudaMemcpy(tmp.data, d_tri_img, sizeof(uint8_t) * rows * cols * 3, cudaMemcpyDeviceToHost);
-            imwrite("/home/shun/Desktop/segment.jpg", tmp);
+            bool success = imwrite("/build/segment.jpg", tmp);
+
+			if(!once0 && !success){
+				cout << "WRITE FAIL nv = " << nv << endl;
+				once0 = true;
+			}
         }
+        break;
     }
 
 
@@ -994,7 +1008,7 @@ void SlicCuda::displayPoint(cv::Mat& image, const float* labels, const cv::Scala
     cudaMalloc(&d_tri_img, sizeof(uint8_t) * rows * cols * 3);
 
     Triangle *h_triangles = new Triangle[20000];
-    
+    bool once1 = false;    
     int num_triangles;
     all_t(rows, cols, d_ownerMap, h_deviceOnwers, d_triangle_sum, d_tri_img, d_img, num_triangles, image, h_triangles);
     Triangle* d_triangles;
@@ -1167,7 +1181,12 @@ void SlicCuda::displayPoint(cv::Mat& image, const float* labels, const cv::Scala
         if (nv % 64 == 0) printf("current nb points: %d\n", nv);
         if (nv % 1024 == 0) {
             printf("Try wriing\n");
-            imwrite("/home/shun/Desktop/segment.jpg", image);
+            bool success = imwrite("/build/segment.jpg", image);
+
+			if(!once1 && !success){
+				cout << "WRITE FAIL nv = " << nv << endl;
+				once1 = true;
+			}
         }
     }
 
@@ -1248,6 +1267,7 @@ static void getSpxSizeFromDiam(const int imWidth, const int imHeight, const int 
 	while ((imHeight%hl2) != 0) {
 		hl2--;
 	}
+
 	cout << "GET1" << endl;
 	std::cout.flush();
 	*spxWidth = ((diamSpx - wl2) < (wl1 - diamSpx)) ? wl2 : wl1;
